@@ -1,0 +1,8 @@
+{
+  "name": "VoiceScript",
+  "description": "An AI-powered writing assistant and scribe for differently-abled students to convert voice answers into formatted exam-ready documents.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
