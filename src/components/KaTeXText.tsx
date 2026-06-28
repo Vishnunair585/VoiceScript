@@ -124,21 +124,21 @@ function renderTextWithMarkdownAndChemicals(text: string): React.ReactNode {
         
         if (trimmedLine.startsWith("### ")) {
           return (
-            <h3 key={i} style={{ fontSize: "16px", fontWeight: "bold", color: "#1c1917", marginTop: "12px", marginBottom: "6px", fontFamily: "sans-serif" }}>
+            <h3 key={i} style={{ fontSize: "1.15em", fontWeight: "bold", color: "#1c1917", marginTop: "12px", marginBottom: "6px", fontFamily: "sans-serif" }}>
               {renderInlineMarkdownAndChemicals(trimmedLine.slice(4))}
             </h3>
           );
         }
         if (trimmedLine.startsWith("## ")) {
           return (
-            <h2 key={i} style={{ fontSize: "18px", fontWeight: "bold", color: "#1c1917", marginTop: "16px", marginBottom: "6px", fontFamily: "sans-serif" }}>
+            <h2 key={i} style={{ fontSize: "1.3em", fontWeight: "bold", color: "#1c1917", marginTop: "16px", marginBottom: "6px", fontFamily: "sans-serif" }}>
               {renderInlineMarkdownAndChemicals(trimmedLine.slice(3))}
             </h2>
           );
         }
         if (trimmedLine.startsWith("# ")) {
           return (
-            <h1 key={i} style={{ fontSize: "22px", fontWeight: "900", color: "#1c1917", marginTop: "20px", marginBottom: "8px", fontFamily: "sans-serif" }}>
+            <h1 key={i} style={{ fontSize: "1.5em", fontWeight: "900", color: "#1c1917", marginTop: "20px", marginBottom: "8px", fontFamily: "sans-serif" }}>
               {renderInlineMarkdownAndChemicals(trimmedLine.slice(2))}
             </h1>
           );
@@ -172,7 +172,7 @@ function renderTextWithMarkdownAndChemicals(text: string): React.ReactNode {
         }
         
         return (
-          <p key={i} style={{ fontSize: "15px", color: "#44403c", lineHeight: "1.6", margin: "2px 0", fontFamily: "sans-serif" }}>
+          <p key={i} style={{ fontSize: "1em", color: "#44403c", lineHeight: "1.6", margin: "2px 0", fontFamily: "sans-serif" }}>
             {renderInlineMarkdownAndChemicals(line)}
           </p>
         );
@@ -189,17 +189,17 @@ export function KaTeXText({ text }: { text: string }) {
       {segments.map((segment, index) => {
         if (segment.type === "code-block") {
           return (
-            <div key={index} style={{ marginTop: "16px", marginBottom: "16px", overflowX: "auto", borderRadius: "12px", border: "1px solid #e7e5e4", backgroundColor: "#1c1917", color: "#f3f4f6", padding: "16px", fontFamily: "monospace", fontSize: "13px", position: "relative", lineHeight: "1.5" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "10px", color: "#a8a29e", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.1em", paddingBottom: "6px", marginBottom: "10px", borderBottom: "1px solid #44403c" }}>
+            <div key={index} style={{ marginTop: "16px", marginBottom: "16px", overflowX: "auto", borderRadius: "12px", border: "1px solid #e7e5e4", backgroundColor: "#1c1917", color: "#f3f4f6", padding: "16px", fontFamily: "monospace", fontSize: "0.9em", position: "relative", lineHeight: "1.5" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.7em", color: "#a8a29e", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.1em", paddingBottom: "6px", marginBottom: "10px", borderBottom: "1px solid #44403c" }}>
                 <span>{segment.language || "programming code"}</span>
-                <span style={{ color: "#34d399", fontFamily: "monospace", fontSize: "9px", backgroundColor: "rgba(6, 78, 59, 0.4)", padding: "2px 6px", borderRadius: "4px", border: "1px solid rgba(16, 185, 129, 0.3)" }}>Verified Code</span>
+                <span style={{ color: "#34d399", fontFamily: "monospace", fontSize: "0.65em", backgroundColor: "rgba(6, 78, 59, 0.4)", padding: "2px 6px", borderRadius: "4px", border: "1px solid rgba(16, 185, 129, 0.3)" }}>Verified Code</span>
               </div>
               <pre style={{ whiteSpace: "pre", overflowX: "auto", userSelect: "all", color: "#f8f8f2", fontFamily: "monospace", lineHeight: "1.5" }}>{segment.content}</pre>
             </div>
           );
         } else if (segment.type === "inline-code") {
           return (
-            <code key={index} style={{ padding: "2px 6px", borderRadius: "4px", backgroundColor: "#fef3c7", color: "#b45309", fontFamily: "monospace", fontSize: "13px", border: "1px solid #fde68a", fontWeight: 600, display: "inline-block" }}>
+            <code key={index} style={{ padding: "2px 6px", borderRadius: "4px", backgroundColor: "#fef3c7", color: "#b45309", fontFamily: "monospace", fontSize: "0.9em", border: "1px solid #fde68a", fontWeight: 600, display: "inline-block" }}>
               {segment.content}
             </code>
           );
@@ -218,7 +218,7 @@ export function KaTeXText({ text }: { text: string }) {
             );
           } catch (e) {
             return (
-              <div key={index} style={{ color: "#ef4444", fontFamily: "monospace", marginTop: "8px", marginBottom: "8px", textAlign: "center", fontSize: "14px", backgroundColor: "#fef2f2", padding: "8px", borderRadius: "6px" }}>
+              <div key={index} style={{ color: "#ef4444", fontFamily: "monospace", marginTop: "8px", marginBottom: "8px", textAlign: "center", fontSize: "1em", backgroundColor: "#fef2f2", padding: "8px", borderRadius: "6px" }}>
                  {segment.content} 
               </div>
             );
@@ -238,7 +238,7 @@ export function KaTeXText({ text }: { text: string }) {
             );
           } catch (e) {
             return (
-              <code key={index} style={{ color: "#ef4444", backgroundColor: "#fef2f2", paddingLeft: "4px", paddingRight: "4px", borderRadius: "4px", fontFamily: "monospace", fontSize: "14px" }}>
+              <code key={index} style={{ color: "#ef4444", backgroundColor: "#fef2f2", paddingLeft: "4px", paddingRight: "4px", borderRadius: "4px", fontFamily: "monospace", fontSize: "1em" }}>
                 ${segment.content}$
               </code>
             );

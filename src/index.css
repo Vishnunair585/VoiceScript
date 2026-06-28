@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
@@ -9,6 +11,11 @@ body {
   font-family: 'Inter', sans-serif;
   background-color: #FDFCFB;
   color: #2D2926;
+}
+
+.dark body {
+  background-color: #111827;
+  color: #E5E7EB;
 }
 
 /* Voice scribe outer ring pulse when active */

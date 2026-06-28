@@ -1,4 +1,5 @@
-export type ScreenState = "SETUP_VIEW" | "WORKSPACE_VIEW" | "PDF_SUCCESS";
+export type ScreenState =
+  "SETUP_VIEW" | "WORKSPACE_VIEW" | "PDF_SUCCESS" | "DOCUMENTS_VIEW";
 
 export type Subject =
   | "Mathematics"
