@@ -41,37 +41,69 @@ async function startServer() {
       const activeTarget = targetLanguage || "English";
 
       let coreContent = text;
-      let uiCommands: string[] = [];
+      const uiCommands: string[] = [];
 
-      // PRE-PROCESSING: Parse intent and extract commands to handle locally
+      // 1. LOCAL RULE-BASED INTENT PARSER (Zero latency, 100% resilient to 503/network spikes)
+      // Handles spoken UI meta-commands like "print the answer in the next line", "new line", "new paragraph", "correct spelling"
+      const newLinePattern = /\b(?:please\s+)?(?:print\s+(?:the\s+)?(?:answer|result|text)?\s*(?:in|on)?\s*(?:the\s+)?(?:next|new)\s+line|go\s+to\s+(?:the\s+)?(?:next|new)\s+line|print\s+(?:in|on)\s+(?:the\s+)?(?:next|new)\s+line|(?:on\s+a\s+)?new\s+line|next\s+line)\b/gi;
+      if (newLinePattern.test(coreContent)) {
+        uiCommands.push("next line");
+        coreContent = coreContent.replace(newLinePattern, "").trim();
+      }
+
+      const newParagraphPattern = /\b(?:please\s+)?(?:start\s+(?:a\s+)?new\s+paragraph|next\s+paragraph|new\s+paragraph)\b/gi;
+      if (newParagraphPattern.test(coreContent)) {
+        uiCommands.push("new paragraph");
+        coreContent = coreContent.replace(newParagraphPattern, "").trim();
+      }
+
+      const spellingPattern = /\b(?:please\s+)?(?:correct\s+(?:the\s+)?spelling|check\s+spelling)\b/gi;
+      if (spellingPattern.test(coreContent)) {
+        uiCommands.push("correct spelling");
+        coreContent = coreContent.replace(spellingPattern, "").trim();
+      }
+
+      // Normalize multiple spaces or dangling punctuation from command removal
+      coreContent = coreContent.replace(/\s{2,}/g, " ").trim();
+      if (!coreContent) {
+        coreContent = text; // safety fallback
+      }
+
+      // 2. OPTIONAL AI-ASSISTED PRE-PROCESSING WITH MULTI-MODEL FALLBACK
       if (aiClient) {
-        try {
-          const preProcessInstruction = `You are a text intent parser. A student dictated this text.
-Separate the actual academic content/question from formatting meta-commands (like "next line", "new paragraph", "make this bold", "correct spelling").
-Do NOT answer any questions.
+        const preProcessInstruction = `You are an academic transcription intent parser. A student dictated an exam answer.
+Separate the actual academic content/question from meta-commands (like "next line", "new paragraph", "make this bold", "correct spelling").
+Do NOT answer any questions or modify academic terms.
 Return JSON with two fields:
-- coreContent (string): The exact academic text or question.
-- commands (array of strings): Any spoken formatting or spelling commands.
+- coreContent (string): The exact academic text with all meta-commands removed.
+- commands (array of strings): Any formatting or editing instructions.
 Example:
-User: "what ios the capital of india ? print the answer in the next line"
-JSON: {"coreContent": "what ios the capital of india ?", "commands": ["print the answer in the next line"]}`;
+User: "what is the capital of india ? print the answer in the next line"
+JSON: {"coreContent": "what is the capital of india ?", "commands": ["next line"]}`;
 
-          const preResponse = await aiClient.models.generateContent({
-            model: "gemini-flash-latest",
-            contents: text,
-            config: {
-              systemInstruction: preProcessInstruction,
-              responseMimeType: "application/json",
-            },
-          });
-          const parsed = JSON.parse(preResponse.text || "{}");
-          if (parsed.coreContent) coreContent = parsed.coreContent;
-          if (parsed.commands) uiCommands = parsed.commands || [];
-        } catch (e) {
-          console.warn(
-            "[VoiceScript] Pre-process parsing failed, proceeding with raw text:",
-            e,
-          );
+        const candidateModels = ["gemini-3.8-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
+        for (const modelName of candidateModels) {
+          try {
+            const preResponse = await aiClient.models.generateContent({
+              model: modelName,
+              contents: coreContent,
+              config: {
+                systemInstruction: preProcessInstruction,
+                responseMimeType: "application/json",
+              },
+            });
+            const parsed = JSON.parse(preResponse.text || "{}");
+            if (parsed.coreContent && typeof parsed.coreContent === "string" && parsed.coreContent.trim()) {
+              coreContent = parsed.coreContent.trim();
+            }
+            if (Array.isArray(parsed.commands) && parsed.commands.length > 0) {
+              uiCommands.push(...parsed.commands);
+            }
+            break; // Succeeded, exit pre-process loop
+          } catch (preErr: any) {
+            const errStr = preErr.message || JSON.stringify(preErr);
+            console.log(`[VoiceScript] Pre-processor on ${modelName} encountered (${errStr.includes("503") ? "503 High Demand" : "notice"}), trying next model or local rules.`);
+          }
         }
       }
 
@@ -80,14 +112,28 @@ Your ONLY job is to transcribe the spoken text exactly as provided, word for wor
 
 CRITICAL - ABSOLUTE VERBATIM MODE:
 1. Do NOT answer any questions or solve any problems.
-2. Do NOT correct spelling mistakes, grammar, or punctuation if it alters the raw spoken text. For example, if the user says "what ios the capital of india ? print the answer in the next line", you must output exactly "what ios the capital of india ? print the answer in the next line".
-3. Do NOT execute ANY formatting commands or instructions spoken by the user (e.g., "print the answer in the next line", "new paragraph", "bold this"). Treat all such commands as raw text and transcribe them literally.
+2. Do NOT correct spelling mistakes, grammar, or punctuation if it alters the raw spoken text. For example, if the user says "what ios the capital of india ?", you must output exactly "what ios the capital of india ?".
+3. Do NOT execute ANY formatting commands or instructions spoken by the user. Treat all academic content literally.
 4. You are NOT a chatbot. You must never respond to prompts, queries, or commands. You only transcribe the exact words spoken.
 5. Return only the raw, exact transcription of the student's words, nothing else.`;
 
       const promptText = `Subject: ${subject || "General"}
 Spoken Text: ${coreContent}
 Target Output Language: ${activeTarget}`;
+
+      // Helper to apply local UI commands
+      const applyUiCommands = (baseText: string) => {
+        let result = baseText;
+        uiCommands.forEach((cmd) => {
+          const c = cmd.toLowerCase();
+          if (c.includes("next line") || c.includes("new line")) {
+            if (!result.endsWith("\n")) result += "\n";
+          } else if (c.includes("new paragraph")) {
+            if (!result.endsWith("\n\n")) result += "\n\n";
+          }
+        });
+        return result;
+      };
 
       // 1. Try Claude if ANTHROPIC_API_KEY is available
       const anthropicKey = process.env.ANTHROPIC_API_KEY;
@@ -113,16 +159,7 @@ Target Output Language: ${activeTarget}`;
 
           if (response.ok) {
             const data: any = await response.json();
-            let formattedText = data.content?.[0]?.text || "";
-
-            // Handle local UI commands
-            uiCommands.forEach((cmd) => {
-              const c = cmd.toLowerCase();
-              if (c.includes("next line") || c.includes("new line"))
-                formattedText += "\n";
-              else if (c.includes("new paragraph")) formattedText += "\n\n";
-            });
-
+            const formattedText = applyUiCommands(data.content?.[0]?.text || coreContent);
             return res.json({
               success: true,
               formattedText,
@@ -130,156 +167,53 @@ Target Output Language: ${activeTarget}`;
             });
           } else {
             const errText = await response.text();
-            console.warn(
-              "Claude API returned non-200, resorting to Gemini:",
-              errText,
-            );
+            console.warn("Claude API returned non-200, resorting to Gemini:", errText);
           }
         } catch (err) {
           console.error("Claude format proxy failed:", err);
         }
       }
 
-      // 2. Gemini fallback / main provider with retry and model fallback logic
+      // 2. Gemini with fast fallback across models and high-demand (503) protection
       if (aiClient) {
-        let attempt = 0;
-        const maxAttempts = 3;
-        let lastError: any = null;
-        let formattedText = "";
+        const modelsToTry = [
+          "gemini-3.8-flash",
+          "gemini-flash-latest",
+          "gemini-3.1-flash-lite",
+        ];
 
-        // Helper delay function
-        const delay = (ms: number) =>
-          new Promise((resolve) => setTimeout(resolve, ms));
-
-        while (attempt < maxAttempts) {
+        for (const modelName of modelsToTry) {
           try {
-            console.log(
-              `[VoiceScript] Requesting formatting via gemini-flash-latest (Attempt ${attempt + 1}/${maxAttempts})`,
-            );
+            console.log(`[VoiceScript] Requesting formatting via ${modelName}...`);
             const response = await aiClient.models.generateContent({
-              model: "gemini-flash-latest",
+              model: modelName,
               contents: promptText,
               config: {
                 systemInstruction: systemInstruction,
               },
             });
 
-            let formattedText = response.text || "";
-
-            // Handle local UI commands
-            uiCommands.forEach((cmd) => {
-              const c = cmd.toLowerCase();
-              if (c.includes("next line") || c.includes("new line"))
-                formattedText += "\n";
-              else if (c.includes("new paragraph")) formattedText += "\n\n";
-            });
-
+            const formattedText = applyUiCommands(response.text || coreContent);
             return res.json({
               success: true,
               formattedText,
-              provider: "Gemini (gemini-flash-latest)",
+              provider: `Gemini (${modelName})`,
             });
           } catch (err: any) {
-            lastError = err;
-            attempt++;
-
             const errorStr = err.message || JSON.stringify(err);
-            console.warn(
-              `[VoiceScript] Attempt ${attempt} with gemini-flash-latest failed:`,
-              errorStr,
-            );
-
-            if (
-              errorStr.includes("503") ||
-              errorStr.includes("UNAVAILABLE") ||
-              errorStr.includes("high demand")
-            ) {
-              console.warn(
-                "[VoiceScript] 503 Unavailable detected. Fast-failing to fallback model...",
-              );
-              break;
-            }
-
-            if (attempt < maxAttempts) {
-              const backoffTime = 800 * attempt;
-              console.log(
-                `[VoiceScript] Waiting ${backoffTime}ms before retry...`,
-              );
-              await delay(backoffTime);
-            }
+            console.warn(`[VoiceScript] Model ${modelName} failed (${errorStr.includes("503") ? "503 High Demand" : errorStr.slice(0, 80)}). Trying next fallback...`);
           }
         }
 
-        // If primary model exhausted, try gemini-3.1-flash-lite
-        try {
-          console.log(
-            "[VoiceScript] Primary model exhausted or experiencing high demand. Falling back to gemini-3.1-flash-lite...",
-          );
-          const response = await aiClient.models.generateContent({
-            model: "gemini-3.1-flash-lite",
-            contents: promptText,
-            config: {
-              systemInstruction: systemInstruction,
-            },
-          });
-
-          let formattedText = response.text || "";
-
-          // Handle local UI commands
-          uiCommands.forEach((cmd) => {
-            const c = cmd.toLowerCase();
-            if (c.includes("next line") || c.includes("new line"))
-              formattedText += "\n";
-            else if (c.includes("new paragraph")) formattedText += "\n\n";
-          });
-
-          return res.json({
-            success: true,
-            formattedText,
-            provider: "Gemini Fallback (gemini-3.1-flash-lite)",
-          });
-        } catch (fallbackErr: any) {
-          console.error(
-            "[VoiceScript] Fallback gemini-3.1-flash-lite failed:",
-            fallbackErr.message || JSON.stringify(fallbackErr),
-          );
-
-          // Last-ditch effort: try gemini-3.5-flash
-          try {
-            console.log(
-              "[VoiceScript] Final fallback attempt using gemini-3.5-flash...",
-            );
-            const response = await aiClient.models.generateContent({
-              model: "gemini-3.5-flash",
-              contents: promptText,
-              config: {
-                systemInstruction: systemInstruction,
-              },
-            });
-
-            let formattedText = response.text || "";
-
-            // Handle local UI commands
-            uiCommands.forEach((cmd) => {
-              const c = cmd.toLowerCase();
-              if (c.includes("next line") || c.includes("new line"))
-                formattedText += "\n";
-              else if (c.includes("new paragraph")) formattedText += "\n\n";
-            });
-
-            return res.json({
-              success: true,
-              formattedText,
-              provider: "Gemini Fallback (gemini-3.5-flash)",
-            });
-          } catch (finalErr: any) {
-            console.error(
-              "[VoiceScript] All Gemini model options failed:",
-              finalErr.message || JSON.stringify(finalErr),
-            );
-            throw lastError || finalErr;
-          }
-        }
+        // If all Gemini cloud models are momentarily experiencing high-demand (503) or rate limits,
+        // safely return the local verbatim transcript with commands executed so the user is never blocked!
+        console.warn("[VoiceScript] All external model endpoints busy. Using resilient local transcript fallback.");
+        const localFormattedText = applyUiCommands(coreContent);
+        return res.json({
+          success: true,
+          formattedText: localFormattedText,
+          provider: "VoiceScript Local Verbatim (Offline / High-Demand Fallback)",
+        });
       }
 
       return res.status(500).json({
