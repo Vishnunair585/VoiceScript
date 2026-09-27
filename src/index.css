@@ -1,38 +1,88 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Lexend:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-dyslexic: "Lexend", "Comic Sans MS", ui-sans-serif, sans-serif;
+
+  /* User Specified Palette: Slate Teal & Salmon Pink / Coral */
+  --color-teal-brand: #3d5b59;
+  --color-teal-brand-dark: #273b3a;
+  --color-teal-brand-light: #527976;
+  --color-teal-brand-soft: #e8f1f0;
+  
+  --color-salmon-brand: #e07a5f;
+  --color-salmon-brand-hover: #cc674e;
+  --color-salmon-brand-light: #fbeee9;
+  
+  --color-parchment: #fbf9f5;
+  --color-parchment-sand: #f4efe6;
+  --color-surface-teal: #1a2a29;
 }
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: #FDFCFB;
-  color: #2D2926;
+  background-color: #fbf9f5;
+  color: #192726;
+  margin: 0;
+  padding: 0;
 }
 
 .dark body {
-  background-color: #111827;
-  color: #E5E7EB;
+  background-color: #121e1d;
+  color: #edf5f4;
 }
 
-/* Voice scribe outer ring pulse when active */
-.voice-pulse {
-  animation: pulse-red 2s infinite;
+/* Accessible Dyslexia Font Accommodation */
+.dyslexia-font {
+  font-family: 'Lexend', ui-sans-serif, sans-serif !important;
+  letter-spacing: 0.05em !important;
+  word-spacing: 0.12em !important;
+  line-height: 1.8 !important;
 }
 
-@keyframes pulse-red {
+/* High-Contrast Mode for Visually Impaired */
+.high-contrast-mode {
+  --tw-border-opacity: 1 !important;
+  border-width: 2px !important;
+}
+
+/* Active Voice Scribe Outer Pulse (Teal & Salmon Pulse) */
+.voice-pulse-teal {
+  animation: pulse-teal 1.8s infinite;
+}
+
+@keyframes pulse-teal {
   0% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    box-shadow: 0 0 0 0 rgba(224, 122, 95, 0.7);
   }
   70% {
-    box-shadow: 0 0 0 20px rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 16px rgba(224, 122, 95, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 0 rgba(224, 122, 95, 0);
   }
+}
+
+/* Smooth custom scrollbars for wide viewport dashboard */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(61, 91, 89, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(61, 91, 89, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(61, 91, 89, 0.6);
 }
 
 .transcript-gradient {

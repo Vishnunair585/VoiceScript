@@ -1,6 +1,6 @@
 {
   "name": "VoiceScript",
-  "description": "An AI-powered writing assistant and scribe for differently-abled students to convert voice answers into formatted exam-ready documents.",
+  "description": "Hands-free examination platform for students with disabilities featuring voice navigation, live transcripts with voice editing, TTS question reading, math and diagram engines, autosave recovery, and tamper-evident SHA-256 submission.",
   "requestFramePermissions": [
     "microphone"
   ],

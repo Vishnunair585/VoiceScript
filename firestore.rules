@@ -17,29 +17,21 @@ service cloud.firestore {
       return request.resource.data;
     }
 
-    function existing() {
-      return resource.data;
-    }
-
     function isValidDocument(data) {
-      return data.keys().hasAll(['userId', 'createdAt'])
+      return data.keys().hasAll(['userId'])
         && data.userId is string
-        && data.createdAt == request.time;
-    }
-
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+        && data.userId.size() <= 128;
     }
 
     match /users/{userId}/documents/{documentId} {
-      allow read: if isOwner(userId) && isValidId(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
       allow create: if isOwner(userId)
-                    && isValidId(userId)
-                    && isValidId(documentId)
                     && isValidDocument(incoming())
                     && incoming().userId == userId;
       allow update: if false; // Documents are immutable
-      allow delete: if isOwner(userId) && isValidId(userId) && isValidId(documentId);
+      allow delete: if isOwner(userId);
     }
   }
 }
+

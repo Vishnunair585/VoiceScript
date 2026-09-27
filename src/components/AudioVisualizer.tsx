@@ -1,10 +1,19 @@
 import React, { useEffect, useRef } from "react";
+import { getCleanMicAudioStream } from "../lib/speechAccuracy";
 
 interface AudioVisualizerProps {
   isListening: boolean;
+  className?: string;
+  width?: number;
+  height?: number;
 }
 
-export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({ isListening }) => {
+export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
+  isListening,
+  className = "",
+  width = 120,
+  height = 36,
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -26,10 +35,13 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({ isListening })
 
   const startVisualizer = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const stream = await getCleanMicAudioStream();
+      if (!stream) return;
       streamRef.current = stream;
 
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const audioContext = new AudioCtx();
       audioContextRef.current = audioContext;
 
       const analyser = audioContext.createAnalyser();
@@ -42,7 +54,7 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({ isListening })
 
       draw();
     } catch (err) {
-      console.error("Error accessing microphone for visualizer:", err);
+      console.warn("Could not start audio visualizer:", err);
     }
   };
 
@@ -60,15 +72,14 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({ isListening })
       analyserRef.current = null;
     }
     if (audioContextRef.current) {
-      audioContextRef.current.close();
+      audioContextRef.current.close().catch(() => {});
       audioContextRef.current = null;
     }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
-    
-    // Clear canvas
+
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext("2d");
@@ -81,75 +92,75 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({ isListening })
   const draw = () => {
     const canvas = canvasRef.current;
     const analyser = analyserRef.current;
-    
     if (!canvas || !analyser) return;
-    
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    
+
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
-    
+
     const renderFrame = () => {
       animationRef.current = requestAnimationFrame(renderFrame);
       analyser.getByteFrequencyData(dataArray);
-      
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Calculate average volume
+
       let sum = 0;
       for (let i = 0; i < bufferLength; i++) {
         sum += dataArray[i];
       }
       const average = sum / bufferLength;
-      const volume = average / 255; // 0 to 1
-      
-      const width = canvas.width;
-      const height = canvas.height;
-      const centerY = height / 2;
-      
+      const volume = average / 255;
+
+      const cWidth = canvas.width;
+      const cHeight = canvas.height;
+      const centerY = cHeight / 2;
+
+      // Create rich gradient using Coral-Salmon (#e07a5f) and Slate Teal (#3d5b59)
+      const grad = ctx.createLinearGradient(0, 0, cWidth, 0);
+      grad.addColorStop(0, "#e07a5f");
+      grad.addColorStop(0.5, "#3d5b59");
+      grad.addColorStop(1, "#e07a5f");
+
       ctx.beginPath();
       ctx.moveTo(0, centerY);
-      
-      // Draw a waveform that reacts to volume
-      for (let i = 0; i < width; i += 5) {
-        // Create a wave that gets taller with more volume
+
+      for (let i = 0; i < cWidth; i += 4) {
         const x = i;
-        // Map x to a sine wave phase
-        const phase = (x / width) * Math.PI * 4 + (Date.now() / 200);
-        // Calculate height based on volume and a base sine wave
-        // Add some random noise based on dataArray for the audio-reactive feel
-        const dataIndex = Math.floor((x / width) * bufferLength);
+        const phase = (x / cWidth) * Math.PI * 4 + Date.now() / 180;
+        const dataIndex = Math.floor((x / cWidth) * bufferLength);
         const intensity = dataArray[dataIndex] / 255;
-        
-        const y = centerY + Math.sin(phase) * (height / 3) * (volume + 0.2) + (intensity * height / 4 * (Math.random() - 0.5));
-        
+
+        const y =
+          centerY +
+          Math.sin(phase) * (cHeight / 2.6) * (volume + 0.15) +
+          (intensity * cHeight) / 3 * (Math.random() - 0.5);
+
         if (i === 0) {
           ctx.moveTo(x, y);
         } else {
           ctx.lineTo(x, y);
         }
       }
-      
-      ctx.strokeStyle = "#10B981"; // emerald-500
-      ctx.lineWidth = 3;
+
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 2.5;
       ctx.lineCap = "round";
       ctx.stroke();
     };
-    
+
     renderFrame();
   };
 
   return (
     <canvas
       ref={canvasRef}
-      width={120}
-      height={60}
-      className="absolute top-1/2 -translate-y-1/2 transition-opacity duration-300"
-      style={{
-        left: "calc(100% + 1rem)",
-        opacity: isListening ? 1 : 0
-      }}
+      width={width}
+      height={height}
+      role="img"
+      aria-label={isListening ? "Microphone active audio waveform" : "Microphone offline"}
+      className={`transition-opacity duration-300 ${className} ${isListening ? "opacity-100" : "opacity-0"}`}
     />
   );
 };
