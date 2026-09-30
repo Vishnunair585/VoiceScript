@@ -562,7 +562,7 @@ export function ExamSubmissionReceiptView({
             <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
               {auditLog.map((entry, idx) => (
                 <div
-                  key={entry.id || idx}
+                  key={`audit-${entry.id || idx}-${idx}`}
                   className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-800 flex items-start justify-between gap-3 text-xs"
                 >
                   <div className="flex items-start gap-2.5">

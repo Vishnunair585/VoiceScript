@@ -311,7 +311,7 @@ export function KaTeXText({ text }: { text: string }) {
             );
           }
         } else {
-          return <React.Fragment key={`seg-txt-${index}`}>{renderTextWithMarkdownAndChemicals(segment.content, `seg-${index}`)}</React.Fragment>;
+          return <div key={`seg-txt-${index}`}>{renderTextWithMarkdownAndChemicals(segment.content, `seg-${index}`)}</div>;
         }
       })}
     </div>

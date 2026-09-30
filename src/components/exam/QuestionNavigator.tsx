@@ -163,7 +163,7 @@ export function QuestionNavigator({
 
           return (
             <button
-              key={q.id}
+              key={`nav-q-${q.id || idx}-${idx}`}
               onClick={() => {
                 onSelectQuestion(idx);
                 if (onCloseMobile) onCloseMobile();

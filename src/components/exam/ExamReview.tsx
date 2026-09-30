@@ -309,11 +309,11 @@ export function ExamReview({
                 Click or speak to answer the remaining {unansweredCount} {unansweredCount === 1 ? "question" : "questions"}:
               </span>
               <div className="flex flex-wrap items-center gap-2">
-                {unansweredQuestions.map((q) => {
+                {unansweredQuestions.map((q, uIdx) => {
                   const qIdx = paper.questions.findIndex((x) => x.id === q.id);
                   return (
                     <button
-                      key={`unans-btn-${q.id}`}
+                      key={`unans-btn-${q.id || uIdx}-${uIdx}`}
                       type="button"
                       onClick={() => onEditQuestion(qIdx)}
                       className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
@@ -364,7 +364,7 @@ export function ExamReview({
             </span>
           </div>
 
-          {filteredQuestions.map((q) => {
+          {filteredQuestions.map((q, fIdx) => {
             const a = answers[q.id];
             const hasAnswer =
               a &&
@@ -376,7 +376,7 @@ export function ExamReview({
 
             return (
               <div
-                key={`rev-card-${q.id}`}
+                key={`rev-card-${q.id || fIdx}-${fIdx}`}
                 className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-5 shadow-sm space-y-3"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-stone-100 dark:border-stone-800">

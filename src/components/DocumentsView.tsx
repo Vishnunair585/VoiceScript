@@ -318,7 +318,7 @@ export function DocumentsView({ user, onBack }: DocumentsViewProps) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {documents.map((doc) => {
+            {documents.map((doc, docIdx) => {
               const pageCount = doc.totalPages || doc.pages?.length || 1;
               const isExam = doc.type === "exam";
               const timeMs = getTimestampMs(doc.createdAt);
@@ -326,7 +326,7 @@ export function DocumentsView({ user, onBack }: DocumentsViewProps) {
 
               return (
                 <div
-                  key={doc.id}
+                  key={`doc-${doc.id || docIdx}-${docIdx}`}
                   onClick={() => handleOpenDoc(doc)}
                   className="bg-white dark:bg-stone-800 border border-[#E7E5E4] dark:border-stone-700 p-5 rounded-2xl flex flex-col gap-3 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all cursor-pointer group relative"
                 >
@@ -399,6 +399,7 @@ export function DocumentsView({ user, onBack }: DocumentsViewProps) {
       <AnimatePresence>
         {selectedDoc && (
           <motion.div
+            key="doc-inspector-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -634,7 +635,7 @@ export function DocumentsView({ user, onBack }: DocumentsViewProps) {
             <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
               {docPages.map((pg, idx) => (
                 <div
-                  key={`doc-pg-${pg.pageNumber || idx}`}
+                  key={`doc-pg-${pg.pageNumber || idx}-${idx}`}
                   style={{
                     border: "1px solid #e2e8f0",
                     borderRadius: "8px",

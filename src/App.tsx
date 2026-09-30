@@ -1908,6 +1908,7 @@ export default function App() {
         <AnimatePresence>
           {errorMessage && (
             <motion.div
+              key="alert-error-message"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
@@ -1932,8 +1933,10 @@ export default function App() {
 
           {restoredExamNotice && (
             <motion.div
+              key="alert-restored-exam"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
               className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/60 border-l-4 border-blue-600 rounded-xl text-blue-950 dark:text-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md border border-blue-200 dark:border-blue-900"
             >
               <div className="flex items-center gap-3">
@@ -1966,6 +1969,7 @@ export default function App() {
 
           {warningMessage && (
             <motion.div
+              key="alert-warning-message"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
@@ -1986,6 +1990,7 @@ export default function App() {
 
           {pageSwitchFeedback && (
             <motion.div
+              key="alert-page-switch-feedback"
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
@@ -2659,7 +2664,7 @@ export default function App() {
                         <div className="hidden sm:flex items-center gap-1 max-w-[120px] overflow-x-auto">
                           {documentPages.map((pg, idx) => (
                             <button
-                              key={pg.id}
+                              key={`doc-page-btn-${pg.id || idx}-${idx}`}
                               type="button"
                               onClick={() => handleSelectDocumentPage(idx)}
                               className={`w-6 h-6 rounded-md text-[11px] font-bold transition-all shrink-0 cursor-pointer ${
@@ -3557,7 +3562,7 @@ export default function App() {
                         const pageText = (idx === currentPageIndex ? (formattedAnswer || transcript) : (pg.formattedAnswer || pg.transcript)) || "";
                         return (
                           <div
-                            key={pg.id || idx}
+                            key={`pdf-multi-page-${pg.id || idx}-${idx}`}
                             className={`p-8 md:p-11 flex flex-col justify-between font-sans ${
                               sheetOrientation === "Landscape"
                                 ? "w-[840px] aspect-[1.414/1]"
@@ -3816,7 +3821,15 @@ export default function App() {
           {/* 4. DOCUMENTS VIEW                                          */}
           {/* ========================================================== */}
           {screen === "DOCUMENTS_VIEW" && (
-            <DocumentsView user={user} onBack={navigateBack} />
+            <motion.div
+              key="documents-view-screen"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full"
+            >
+              <DocumentsView user={user} onBack={navigateBack} />
+            </motion.div>
           )}
 
           {/* ========================================================== */}
@@ -3947,6 +3960,7 @@ export default function App() {
       <AnimatePresence>
         {showShortcutsModal && (
           <motion.div
+            key="shortcuts-modal-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

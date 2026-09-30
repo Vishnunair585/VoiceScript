@@ -763,11 +763,11 @@ export function VoiceAnswerEditor({
                     Choose Option (or say "Select option A/B/C/D"):
                   </span>
                   <div className="grid grid-cols-2 gap-1.5">
-                    {question.options.map((opt) => {
+                    {question.options.map((opt, optIdx) => {
                       const isSelected = answer.selectedOption === opt.key;
                       return (
                         <button
-                          key={`opt-${opt.key}`}
+                          key={`opt-${opt.key || optIdx}-${optIdx}`}
                           type="button"
                           onClick={() => handleSelectOption(opt.key)}
                           className={`p-1.5 px-2 rounded-xl border text-left transition-all flex items-center gap-1.5 cursor-pointer ${

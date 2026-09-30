@@ -679,7 +679,7 @@ export function VoiceCommandCheatsheet({
                   const firstPhrase = f.spokenPhrase.split('"')[1] || f.spokenPhrase.replace(/"/g, "").split(" or ")[0].trim();
                   return (
                     <div
-                      key={idx}
+                      key={`side-math-${f.title}-${idx}`}
                       onClick={() => {
                         handleDemonstrateSpeech(firstPhrase);
                         if (onSelectCommand) {
@@ -732,7 +732,7 @@ export function VoiceCommandCheatsheet({
                   const firstPhrase = f.spokenPhrase.split('"')[1] || f.spokenPhrase.replace(/"/g, "").split(" or ")[0].trim();
                   return (
                     <div
-                      key={idx}
+                      key={`side-sign-${f.title}-${idx}`}
                       onClick={() => {
                         handleDemonstrateSpeech(firstPhrase);
                         if (onSelectCommand) {
@@ -785,7 +785,7 @@ export function VoiceCommandCheatsheet({
                   const firstPhrase = f.spokenPhrase.split('"')[1] || f.spokenPhrase.replace(/"/g, "").split(" or ")[0].trim();
                   return (
                     <div
-                      key={idx}
+                      key={`side-sci-${f.title}-${idx}`}
                       onClick={() => {
                         handleDemonstrateSpeech(firstPhrase);
                         if (onSelectCommand) {
@@ -836,7 +836,7 @@ export function VoiceCommandCheatsheet({
               ) : (
                 diagramCommands.map((d, idx) => (
                   <div
-                    key={idx}
+                    key={`side-diag-${d.title}-${idx}`}
                     onClick={() => {
                       handleDemonstrateSpeech(d.exampleSpeech);
                       if (onSelectCommand) {
@@ -972,7 +972,7 @@ export function VoiceCommandCheatsheet({
             const firstPhrase = f.spokenPhrase.split('"')[1] || f.spokenPhrase.replace(/"/g, "").split(" or ")[0].trim();
             return (
               <div
-                key={idx}
+                key={`modal-math-${f.title}-${idx}`}
                 onClick={() => {
                   handleDemonstrateSpeech(firstPhrase);
                   if (onSelectCommand) {
@@ -1028,7 +1028,7 @@ export function VoiceCommandCheatsheet({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {DIAGRAM_COMMAND_SHEET.map((d, idx) => (
             <div
-              key={idx}
+              key={`modal-diag-${d.title}-${idx}`}
               onClick={() => {
                 handleDemonstrateSpeech(d.exampleSpeech);
                 if (onSelectCommand) {
